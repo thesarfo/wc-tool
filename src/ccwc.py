@@ -1,4 +1,5 @@
 import sys
+import locale
 
 def print_bytes(filename):
     try:
@@ -24,9 +25,17 @@ def print_words(filename):
     except FileNotFoundError:
         print(f"Error: File '{filename}' not found.")
 
+def print_characters(filename):
+    try:
+        with open(filename, 'r', encoding='utf-8') as file:
+            chars = len(file.read())
+            print(f"{chars} {filename}")
+    except FileNotFoundError:
+        print(f"Error: File '{filename}' not found.")
+
 if __name__ == "__main__":
-    if len(sys.argv) != 3 or sys.argv[1] not in ["-c", "-l", "-w"]:
-        print("Correct usage is: ccwc -c|-l|-w <filename>")
+    if len(sys.argv) != 3 or sys.argv[1] not in ["-c", "-l", "-w", "-m"]:
+        print("Correct usage is: ccwc -c|-l|-w|-m <filename>")
         sys.exit(1)
     
     alt = sys.argv[1]
@@ -38,3 +47,8 @@ if __name__ == "__main__":
         print_lines(filename)
     elif alt == "-w":
         print_words(filename)
+    elif alt == "-m":
+        if locale.getpreferredencoding() == 'UTF-8':
+            print_characters(filename)
+        else:
+            print_bytes(filename)
