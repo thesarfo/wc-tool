@@ -14,4 +14,4 @@ execute the Python script with the options and arguments.
 python ccwc.py -c test.txt
 ```
 
-Also supports piping and reading from the Standard Input
+Also supports reading from the Standard Input
