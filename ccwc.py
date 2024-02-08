@@ -1,71 +1,54 @@
+import argparse
 import sys
-import locale
-
-def print_bytes(filename):
-    try:
-        with open(filename, 'rb') as file:
-            bytes = len(file.read())
-            return bytes
-    except FileNotFoundError:
-        print(f"Error: File '{filename}' cannot be found.")
-        return 0
-
-def print_lines(filename):
-    try:
-        with open(filename, 'r') as file:
-            lines = sum(1 for line in file)
-            return lines
-    except FileNotFoundError:
-        print(f"Error: File '{filename}' not found.")
-        return 0
-
-def print_words(filename):
-    try:
-        with open(filename, 'r') as file:
-            words = sum(len(line.split()) for line in file)
-            return words
-    except FileNotFoundError:
-        print(f"Error: File '{filename}' not found.")
-        return 0
-
-def print_characters(filename):
-    try:
-        with open(filename, 'r', encoding='utf-8') as file:
-            characters = len(file.read())
-            return chars
-    except FileNotFoundError:
-        print(f"Error: File '{filename}' not found.")
-        return 0
+import os
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Correct usage is: ccwc  -c|-l|-w|-m <filename>")
-        sys.exit(1)
+	file_option = "filename"
+	is_tty = sys.stdin.isatty() 
+	if not is_tty:
+		file_option = "--filename"
+	parser = argparse.ArgumentParser(prog="wc", description="same functionality as wc in the linux cli")
+	parser.add_argument(file_option)
+	parser.add_argument("-c", "--count", action="store_true")
+	parser.add_argument("-l", "--line-count", action="store_true")
+	parser.add_argument("-w", "--words", action="store_true")
+	parser.add_argument("-m", "--word-count", action="store_true")
 
-    if len(sys.argv) == 2:
-        filename = sys.argv[1]
-        bytes = print_bytes(filename)
-        lines = print_lines(filename)
-        words = print_words(filename)
-        print(f"{lines: >6} {words: >7} {bytes: >7} {filename}")
-        sys.exit(0)
+	args = parser.parse_args()
 
-    alt = sys.argv[1]
-    filename = sys.argv[2]
+	content = None
+	if is_tty:
+		_, filename = os.path.split(args.filename)
+		with open(args.filename, "rb") as file:
+			content = file.read()
+		no_args = len(sys.argv) <= 2
+	else:
+		filename = ""
+		content = sys.stdin.buffer.read()
+		no_args = len(sys.argv) <= 1
+	
+	count, line_count, words = 0, 0, 0
+	
+	if args.count or no_args or not is_tty:
+		count = len(content)
+		if args.count: 
+			(not no_args or is_tty) and print(count, filename)
+	
+	if args.line_count or no_args or not is_tty:
+		for char in content.decode("utf-8"):
+			if char == "\n":
+				line_count += 1
+		if args.line_count: 
+			(not no_args or is_tty) and print(line_count, filename)
+	
+	if args.words or no_args or not is_tty:
+		words = len(content.decode("utf-8").split()) 
+		if args.words:
+			(not no_args or is_tty) and print(words, filename)
 
-    if alt == "-c":
-        print(print_bytes(filename), filename)
-    elif alt == "-l":
-        print(print_lines(filename), filename)
-    elif alt == "-w":
-        print(print_words(filename), filename)
-    elif alt == "-m":
-        if locale.getpreferredencoding() == 'UTF-8':
-            print(print_characters(filename), filename)
-        else:
-            print(print_bytes(filename), filename)
-    else:
-        bytes = print_bytes(filename)
-        lines = print_lines(filename)
-        words = print_words(filename)
-        print(f"{lines: >6} {words: >7} {bytes: >7} {filename}")
+	if args.word_count or not is_tty:
+		if args.word_count:
+			print(len(content.decode("utf-8")), filename)
+	
+	if no_args:
+		print(line_count, words, count, filename)
